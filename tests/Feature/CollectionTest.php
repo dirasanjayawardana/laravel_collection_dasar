@@ -398,4 +398,38 @@ class CollectionTest extends TestCase
         $this->assertEqualsCanonicalizing([7, 8, 9], $result->all()[2]->all());
         $this->assertEqualsCanonicalizing([10], $result->all()[3]->all());
     }
+
+
+    // Retrieve (untuk mengambil data di collection)
+    // first() --> mengambil data pertama di collection, atau null jika tidak ada
+    // firstOfFail() --> mengambil data pertama di collection, atau error ItemNotFoundException jika tidak ada
+    // first(function) --> mengambil data pertama di collection yang sesuai dengan kondisi function jika menghasilkan nilai true
+    // firstWhere(key, value) --> mengambil data pertama di collection sesuai dengan key dan value yang diberikan
+    public function testFirst()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->first();
+        $this->assertEquals(1, $result);
+
+        $result = $collection->first(function ($value, $key) {
+            return $value > 5;
+        });
+        $this->assertEquals(6, $result);
+
+    }
+    // last() --> mengambil data terakhir di collection, atau null jika tidak ada
+    // last(function) --> mengambil data terakhir di collection yang sesuai dengan kondisi function jika menghasilkan nilai true
+    public function testLast()
+    {
+
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->last();
+        $this->assertEquals(9, $result);
+
+        $result = $collection->last(function ($value, $key) {
+            return $value < 5;
+        });
+        $this->assertEquals(4, $result);
+    }
+
 }
