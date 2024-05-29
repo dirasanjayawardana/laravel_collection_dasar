@@ -247,4 +247,155 @@ class CollectionTest extends TestCase
         $this->assertEquals(["Dira" => 100, "Sanjaya" => 90], $result1->all());
         $this->assertEquals(["Wardana" => 80], $result2->all());
     }
+
+
+    // Testing (operasi untuk mengecek isi data di collection, balikannya adalah boolean)
+    // has(array) --> mengecek apakah collection memiliki semua key yg ada di array
+    // hasAny(array) --> mengecek apakah collection memilihi salah satu key yg ada di array
+    // contains(value) --> mengecek apakah collection memiliki data value
+    // contains(key, value) --> mengecek apakah collection memiliki data key dengan value
+    // contains(function) --> iterasi tiap data, mengirim ke function dan mengecek apakah salah satu data menghasilkan true
+    public function testTesting()
+    {
+        $collection = collect(["Dira", "Sanjaya", "Wardana"]);
+        self::assertTrue($collection->contains("Dira"));
+        self::assertTrue($collection->contains(function ($value, $key) {
+            return $value == "Dira";
+        }));
+    }
+
+
+    // Grouping (menggabungkan element-element yang ada di collection)
+    // groupBy(key) --> menggabungkan data collection per key
+    // groupBy(function) --> menggabungkan data collection per hasil function
+    public function testGrouping()
+    {
+        $collection = collect([
+            [
+                "name" => "Dira",
+                "department" => "IT"
+            ],
+            [
+                "name" => "Sanjaya",
+                "department" => "IT"
+            ],
+            [
+                "name" => "Wardana",
+                "department" => "HR"
+            ],
+        ]);
+        $result = $collection->groupBy("department");
+        $this->assertEquals([
+            "IT" => collect([
+                [
+                    "name" => "Dira",
+                    "department" => "IT"
+                ],
+                [
+                    "name" => "Sanjaya",
+                    "department" => "IT"
+                ]
+            ]),
+            "HR" => collect([
+                [
+                    "name" => "Wardana",
+                    "department" => "HR"
+                ]
+            ])
+        ], $result->all());
+
+        $result2 = $collection->groupBy(function ($value, $key) {
+            return $value["department"];
+        });
+        $this->assertEquals([
+            "IT" => collect([
+                [
+                    "name" => "Dira",
+                    "department" => "IT"
+                ],
+                [
+                    "name" => "Sanjaya",
+                    "department" => "IT"
+                ]
+            ]),
+            "HR" => collect([
+                [
+                    "name" => "Wardana",
+                    "department" => "HR"
+                ]
+            ])
+        ], $result2->all());
+    }
+
+
+    // Slicing (operasi untuk mengambil sebagian data di collection)
+    // slice(startIndex) --> mengambil data mulai dari start sampai data terakhir
+    // slice(startIndex, length) --> mengambil data mulai dari start sepanjang length
+    public function testSlice()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->slice(3);
+        $this->assertEqualsCanonicalizing([4, 5, 6, 7, 8, 9], $result->all());
+
+        $result2 = $collection->slice(3, 2);
+        $this->assertEqualsCanonicalizing([4, 5], $result2->all());
+    }
+
+
+    // Take & Skip (untuk mengambil sebagian data di collection)
+    // take(length) --> mengambil data dari awal sepanjang length, jika length negative artinya proses pengambilan dari posisi belakang
+    // takeUntil(function) --> iterasi tiap data, ambil tiap data sampai function mengembalikan nilai true, kemudian iterasi dihentikan
+    // takeWhile(function) --> iterasi tiap data, ambil tiap data sampai function mengembalikan nilai false, kemudian iterasi dihentikan
+    public function testTake()
+    {
+        $collection = collect([1, 2, 3, 1, 2, 3, 1, 2, 3]);
+
+        $result = $collection->take(3);
+        $this->assertEqualsCanonicalizing([1, 2, 3], $result->all());
+
+        $result = $collection->takeUntil(function ($value, $key) {
+            return $value == 3;
+        });
+        $this->assertEqualsCanonicalizing([1, 2], $result->all());
+
+        $result = $collection->takeWhile(function ($value, $key) {
+            return $value < 3;
+        });
+        $this->assertEqualsCanonicalizing([1, 2], $result->all());
+    }
+    // skip(length) --> ambil seluruh data kecuali sejumlah length diawal
+    // skipUntil(function) --> iterasi tiap data, skip sampai ...
+    // skipWhile(function) --> iterasi tiap data, skip saat ...
+    public function testSkip()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        $result = $collection->skip(3);
+        $this->assertEqualsCanonicalizing([4, 5, 6, 7, 8, 9], $result->all());
+
+        $result = $collection->skipUntil(function ($value, $key) {
+            return $value == 3;
+        });
+        $this->assertEqualsCanonicalizing([3, 4, 5, 6, 7, 8, 9], $result->all());
+
+        $result = $collection->skipWhile(function ($value, $key) {
+            return $value < 3;
+        });
+        $this->assertEqualsCanonicalizing([3, 4, 5, 6, 7, 8, 9], $result->all());
+    }
+
+
+    // Chunked (untuk memotong collection menjadi beberapa collection)
+    // chunk(number) --> potong collection menjadi lebih kecil dimana tiap collection memiliki sejumlah total data number
+    public function testChunk()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        $result = $collection->chunk(3);
+
+        $this->assertEqualsCanonicalizing([1, 2, 3], $result->all()[0]->all());
+        $this->assertEqualsCanonicalizing([4, 5, 6], $result->all()[1]->all());
+        $this->assertEqualsCanonicalizing([7, 8, 9], $result->all()[2]->all());
+        $this->assertEqualsCanonicalizing([10], $result->all()[3]->all());
+    }
 }
