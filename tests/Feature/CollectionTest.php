@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Data\Person;
+use Illuminate\Support\LazyCollection;
 use Tests\TestCase;
 
 // collection --> sebuah tipe data yang mirip seperti array namun berupa objek yang memiliki banyak method untuk melakukan manipulasi data
@@ -432,4 +433,113 @@ class CollectionTest extends TestCase
         $this->assertEquals(4, $result);
     }
 
+
+    // Random (mengambil data di collection secara acak)
+    // random() --> mengambil satu data collection dengan posisi random
+    // random(total) --> mengambil sejumlah total data di collection dengan posisi random
+    public function testRandom()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->random();
+        // $result = $collection->random(5);
+
+        $this->assertTrue(in_array($result, [1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    }
+
+
+    // Checking Existeance (mengecek apakah data yang dicari ada atau tidak di collection)
+    // isEmpty() --> mengecek apakah collection kosong
+    // isNotEmpty() --> mengecek apakah collection tidak kosong
+    // contains(value) --> mengecek apakah collection memiliki value yang dicari
+    // contains(function) --> mengecek apakah collection memiliki value dengan kondisi function yang menghasilkan true
+    // containsOneItem() --> mengecek apakah collection hanya memiliki satu data
+    public function testCheckingExistence()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $this->assertTrue($collection->isNotEmpty());
+        $this->assertFalse($collection->isEmpty());
+        $this->assertTrue($collection->contains(1));
+        $this->assertFalse($collection->contains(10));
+        $this->assertTrue($collection->contains(function ($value, $key) {
+            return $value == 8;
+        }));
+    }
+
+
+    // Ordering (mengurutkan data di collection)
+    // sort() --> mengurutkan secara ascending
+    // sortBy(key/function) --> mengurutkan secara ascending berdasarkan key atau function
+    // sortDesc() --> mengurutkan secara descending
+    // sortByDesc(key/function) --> mengurutkan secara ascending berdasarkan key atau function
+    // sortKeys() --> mengurutkan secara ascending berdasarkan keys
+    // sortKeysDesc() --> mengurutkan secara descending berdasarkan keys
+    // reverse() --> membalikkan urutan collection
+    public function testOrdering()
+    {
+        $collection = collect([1, 3, 2, 4, 6, 5, 8, 7, 9]);
+        $result = $collection->sort();
+        $this->assertEqualsCanonicalizing([1, 2, 3, 4, 5, 6, 7, 8, 9], $result->all());
+
+        $result = $collection->sortDesc();
+        $this->assertEqualsCanonicalizing([9, 8, 7, 6, 5, 4, 3, 2, 1], $result->all());
+
+    }
+
+
+    // Aggregate
+    // min(), max(), average()/avg(), sum(),
+    // count() --> mengambil total seluruh data
+    public function testAggregate()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->sum();
+        $this->assertEquals(45, $result);
+
+        $result = $collection->avg();
+        $this->assertEquals(5, $result);
+
+        $result = $collection->min();
+        $this->assertEquals(1, $result);
+
+        $result = $collection->max();
+        $this->assertEquals(9, $result);
+    }
+
+
+    // Reduce (operasi yang dilakukan disetiap data yg ada di collection secara sequential, dimana hasil dari reduce sebelumnya akan digunakan diiterasi selanjutnya)
+    // reduce(fucntion(carry, item)) --> pada iterasi pertama, carry akan bernilai data pertama, dan item adalah data selanjutnya, pada iterasi selanjutnya, carry adalah hasil dari iterasi sebelumnya, itemm adalah data selanjutnya
+    public function testReduce()
+    {
+        $collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        $result = $collection->reduce(function ($carry, $item) {
+            return $carry + $item;
+        });
+        $this->assertEquals(45, $result);
+
+        // reduce(1,2) = 3
+        // reduce(3,3) = 6
+        // reduce(6,4) = 10
+        // reduce(10,5) = 15
+        // reduce(15,6) = 21
+        // reduce(21,7) = 28
+    }
+
+
+    // Lazy Collection (operasi akan dieksekusi hanya ketika dibutuhkan)
+    // yield digunakan untuk membuat generator dalam PHP. Generator adalah fungsi khusus yang memungkinkan mengembalikan nilai satu per satu, Setiap kali yield dieksekusi, ia akan "menghentikan" eksekusi fungsi sementara, dan mengembalikan nilai ke caller (pemanggil). Fungsi akan dilanjutkan dari tempat terakhir saat generator dipanggil kembali.
+    public function testLazyCollection()
+    {
+
+        $collection = LazyCollection::make(function () {
+            $value = 0;
+
+            while (true) {
+                yield $value;
+                $value++;
+            }
+        });
+
+        $result = $collection->take(10); // ketika dibutuhkan baru akan dibuatkan collection sesuai kebutuhan
+        $this->assertEqualsCanonicalizing([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], $result->all());
+    }
 }
